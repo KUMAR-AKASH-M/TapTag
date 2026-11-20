@@ -15,6 +15,10 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
 
+    companion object {
+        const val EXTRA_DUMP = "com.kumar.taptag.DUMP"
+    }
+
     private var nfcAdapter: NfcAdapter? = null
     private lateinit var statusText: TextView
     private lateinit var resultText: TextView
@@ -28,6 +32,9 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
 
         findViewById<Button>(R.id.copyButton).setOnClickListener { copyResult() }
         findViewById<Button>(R.id.clearButton).setOnClickListener { clearResult() }
+        findViewById<Button>(R.id.historyButton).setOnClickListener {
+            startActivity(Intent(this, HistoryActivity::class.java))
+        }
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         when {
@@ -36,7 +43,10 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
             else -> statusText.text = "Ready. Tap a card to the back of the phone."
         }
 
-        intent?.let { handleIntent(it) }
+        intent?.let {
+            showDumpFromIntent(it)
+            handleIntent(it)
+        }
     }
 
     override fun onResume() {
@@ -61,11 +71,20 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        showDumpFromIntent(intent)
         handleIntent(intent)
     }
 
     override fun onTagDiscovered(tag: Tag) {
         showTag(tag)
+    }
+
+    /** Shows a saved dump opened from History. Returns true if one was shown. */
+    private fun showDumpFromIntent(intent: Intent): Boolean {
+        val dump = intent.getStringExtra(EXTRA_DUMP) ?: return false
+        resultText.text = dump
+        statusText.text = "Showing a saved scan from History."
+        return true
     }
 
     private fun handleIntent(intent: Intent) {
@@ -84,17 +103,36 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         }
     }
 
-    /** Runs the (blocking) tag read off the UI thread, then shows the result. */
+    /** Runs the (blocking) tag read off the UI thread, saves it, then shows it. */
     private fun showTag(tag: Tag) {
         runOnUiThread { statusText.text = "Reading card…" }
         Thread {
-            val dump = try {
-                TagDump.dump(tag)
+            val result = try {
+                TagDump.scan(tag)
             } catch (e: Exception) {
-                "Could not read this card: " + e.message
+                null
             }
+            if (result == null) {
+                runOnUiThread {
+                    resultText.text = "Could not read this card."
+                    statusText.text = "Ready. Tap a card to the back of the phone."
+                }
+                return@Thread
+            }
+            val now = System.currentTimeMillis()
+            ScanHistory.save(
+                applicationContext,
+                ScanRecord(
+                    id = now,
+                    timeMillis = now,
+                    uid = result.uid,
+                    tech = result.tech,
+                    foundText = result.foundText,
+                    dump = result.dump
+                )
+            )
             runOnUiThread {
-                resultText.text = dump
+                resultText.text = result.dump
                 statusText.text = "Card read. Tap another card to scan again."
             }
         }.start()

@@ -3,4 +3,8 @@
     <string name="status_ready">Ready. Tap a card to the back of the phone.</string>
     <string name="copy">Copy</string>
     <string name="clear">Clear</string>
+    <string name="history">History</string>
+    <string name="clear_history">Clear history</string>
+    <string name="no_history">No scans yet. Tap a card and it will show up here.</string>
+    <string name="delete">Delete</string>
 </resources>

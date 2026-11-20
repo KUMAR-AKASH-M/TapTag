@@ -41,8 +41,13 @@ number in plain text — TapTag shows it, it does not change it.
 - Nothing happens on tap — make sure NFC is on, the app is in the foreground,
   and the card is held still against the phone's NFC spot for a second.
 
-## What comes after v1
+## What's in v1.2
 
-- Scan history (saved list of past scans)
+- **Scan history:** every scan is saved on the phone (newest first, up to 50).
+  The History button opens the list — tap a scan to see its full dump again,
+  delete one scan, or clear the whole list. History survives app restarts.
+
+## What comes after v1.2
+
 - Writing NDEF text/URL records to NTAG cards
 - Reading Mifare sectors with a custom key (never sector 0 of the college card)

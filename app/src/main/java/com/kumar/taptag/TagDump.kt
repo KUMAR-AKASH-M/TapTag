@@ -8,15 +8,27 @@ import android.nfc.tech.NdefFormatable
 import android.nfc.tech.NfcA
 import java.io.IOException
 
+/** One scan, with the pieces History needs plus the full readable dump. */
+data class ScanResult(
+    val uid: String,
+    val tech: String,
+    val foundText: List<String>,
+    val dump: String
+)
+
 /** Builds a human-readable dump of a scanned tag. Reader only, never writes. */
 object TagDump {
 
-    fun dump(tag: Tag): String {
+    fun dump(tag: Tag): String = scan(tag).dump
+
+    fun scan(tag: Tag): ScanResult {
         val body = StringBuilder()
         val foundText = mutableListOf<String>()
+        val uid = tag.id.toHex(":")
+        val tech = tag.techList.joinToString(", ") { it.substringAfterLast('.') }
 
-        body.appendLine("UID: " + tag.id.toHex(":"))
-        body.appendLine("Tech: " + tag.techList.joinToString(", ") { it.substringAfterLast('.') })
+        body.appendLine("UID: " + uid)
+        body.appendLine("Tech: " + tech)
         body.appendLine()
 
         val nfcA = NfcA.get(tag)
@@ -61,7 +73,7 @@ object TagDump {
             out.appendLine()
         }
         out.append(body.toString().trimEnd())
-        return out.toString().trimEnd()
+        return ScanResult(uid, tech, foundText, out.toString().trimEnd())
     }
 
     private fun dumpSectors(classic: MifareClassic, out: StringBuilder, foundText: MutableList<String>) {
