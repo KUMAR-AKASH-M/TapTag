@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.TapTag" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">#1B6EF3</item>
+        <item name="colorPrimaryDark">#1559C7</item>
+        <item name="colorAccent">#1B6EF3</item>
+    </style>
+</resources>
