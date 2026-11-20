@@ -52,10 +52,24 @@
             android:text="@string/clear" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/historyButton"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="@string/history" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/historyButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/history" />
+
+        <Button
+            android:id="@+id/writeButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/write" />
+    </LinearLayout>
 </LinearLayout>

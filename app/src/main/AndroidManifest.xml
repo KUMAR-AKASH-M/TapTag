@@ -31,5 +31,9 @@
             android:name=".HistoryActivity"
             android:exported="false"
             android:label="@string/history" />
+        <activity
+            android:name=".WriteActivity"
+            android:exported="false"
+            android:label="@string/write" />
     </application>
 </manifest>

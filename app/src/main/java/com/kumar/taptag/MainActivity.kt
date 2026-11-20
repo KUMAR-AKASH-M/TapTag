@@ -35,6 +35,9 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         findViewById<Button>(R.id.historyButton).setOnClickListener {
             startActivity(Intent(this, HistoryActivity::class.java))
         }
+        findViewById<Button>(R.id.writeButton).setOnClickListener {
+            startActivity(Intent(this, WriteActivity::class.java))
+        }
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         when {

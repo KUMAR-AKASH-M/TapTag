@@ -41,13 +41,15 @@ number in plain text — TapTag shows it, it does not change it.
 - Nothing happens on tap — make sure NFC is on, the app is in the foreground,
   and the card is held still against the phone's NFC spot for a second.
 
-## What's in v1.2
+## What's in v1.3
 
-- **Scan history:** every scan is saved on the phone (newest first, up to 50).
-  The History button opens the list — tap a scan to see its full dump again,
-  delete one scan, or clear the whole list. History survives app restarts.
+- **NDEF writing:** type some text or a URL, tap Write to card, hold a blank
+  NTAG card to the phone. Text writes an NDEF text record, URL writes an
+  NDEF URI record. Blank cards are formatted automatically if needed.
+- **Safety:** writing to any Mifare Classic card is blocked in code — your
+  college ID card cannot be written to by this app. Locked (read-only) cards
+  and cards too small for the message are refused with a clear message.
 
-## What comes after v1.2
+## What comes after v1.3
 
-- Writing NDEF text/URL records to NTAG cards
 - Reading Mifare sectors with a custom key (never sector 0 of the college card)

@@ -7,4 +7,13 @@
     <string name="clear_history">Clear history</string>
     <string name="no_history">No scans yet. Tap a card and it will show up here.</string>
     <string name="delete">Delete</string>
+    <string name="write">Write</string>
+    <string name="write_title">Write to a card</string>
+    <string name="write_warning">Only blank NTAG cards. Your college ID card is blocked — writing to it could destroy it.</string>
+    <string name="write_type_text">Text</string>
+    <string name="write_type_url">URL</string>
+    <string name="write_text_hint">Text to write…</string>
+    <string name="write_url_hint">example.com or https://…</string>
+    <string name="write_to_card">Write to card</string>
+    <string name="write_ready">Type something, tap Write to card, then hold a card to the phone.</string>
 </resources>
