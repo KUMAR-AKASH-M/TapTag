@@ -18,12 +18,17 @@
         android:layout_marginTop="12dp"
         android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/resultText"
+        <HorizontalScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:textSize="13sp" />
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/resultText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="13sp" />
+        </HorizontalScrollView>
     </ScrollView>
 
     <LinearLayout

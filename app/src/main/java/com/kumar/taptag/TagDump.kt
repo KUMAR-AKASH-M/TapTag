@@ -12,71 +12,100 @@ import java.io.IOException
 object TagDump {
 
     fun dump(tag: Tag): String {
-        val out = StringBuilder()
-        out.appendLine("UID: " + tag.id.toHex(":"))
-        out.appendLine("Tech: " + tag.techList.joinToString(", ") { it.substringAfterLast('.') })
-        out.appendLine()
+        val body = StringBuilder()
+        val foundText = mutableListOf<String>()
+
+        body.appendLine("UID: " + tag.id.toHex(":"))
+        body.appendLine("Tech: " + tag.techList.joinToString(", ") { it.substringAfterLast('.') })
+        body.appendLine()
 
         val nfcA = NfcA.get(tag)
         if (nfcA != null) {
-            out.appendLine("ATQA: 0x" + nfcA.atqa.toHex(""))
-            out.appendLine("SAK: 0x" + "%02X".format(nfcA.sak.toInt() and 0xFF))
-            out.appendLine()
+            body.appendLine("ATQA: 0x" + nfcA.atqa.toHex(""))
+            body.appendLine("SAK: 0x" + "%02X".format(nfcA.sak.toInt() and 0xFF))
+            body.appendLine()
         }
 
         val classic = MifareClassic.get(tag)
         if (classic != null) {
-            out.appendLine("Mifare Classic")
-            out.appendLine("Type: " + classicTypeName(classic.type))
-            out.appendLine("Size: " + classic.size + " bytes")
-            out.appendLine("Sectors: " + classic.sectorCount + ", blocks: " + classic.blockCount)
-            out.appendLine()
-            dumpSectors(classic, out)
+            body.appendLine("Mifare Classic")
+            body.appendLine("Type: " + classicTypeName(classic.type))
+            body.appendLine("Size: " + classic.size + " bytes")
+            body.appendLine("Sectors: " + classic.sectorCount + ", blocks: " + classic.blockCount)
+            body.appendLine()
+            dumpSectors(classic, body, foundText)
         }
 
         val ndef = Ndef.get(tag)
         if (ndef != null) {
-            out.appendLine("NDEF: " + ndef.type)
-            out.appendLine("Max size: " + ndef.maxSize + " bytes, writable: " + ndef.isWritable)
+            body.appendLine("NDEF: " + ndef.type)
+            body.appendLine("Max size: " + ndef.maxSize + " bytes, writable: " + ndef.isWritable)
             val message = ndef.cachedNdefMessage
             if (message != null) {
                 for (record in message.records) {
-                    out.appendLine("Record: " + describeRecord(record))
+                    body.appendLine("Record: " + describeRecord(record))
                 }
             } else {
-                out.appendLine("No NDEF message stored.")
+                body.appendLine("No NDEF message stored.")
             }
-            out.appendLine()
+            body.appendLine()
         } else if (NdefFormatable.get(tag) != null) {
-            out.appendLine("NDEF: not formatted yet (NdefFormatable).")
-            out.appendLine()
+            body.appendLine("NDEF: not formatted yet (NdefFormatable).")
+            body.appendLine()
         }
 
+        val out = StringBuilder()
+        if (foundText.isNotEmpty()) {
+            out.appendLine("Text found on card:")
+            for (text in foundText) out.appendLine("  • $text")
+            out.appendLine()
+        }
+        out.append(body.toString().trimEnd())
         return out.toString().trimEnd()
     }
 
-    private fun dumpSectors(classic: MifareClassic, out: StringBuilder) {
+    private fun dumpSectors(classic: MifareClassic, out: StringBuilder, foundText: MutableList<String>) {
+        val emptySectors = mutableListOf<Int>()
         try {
             classic.connect()
             for (sector in 0 until classic.sectorCount) {
-                out.appendLine("Sector $sector")
                 val authed = classic.authenticateSectorWithKeyA(sector, MifareClassic.KEY_DEFAULT)
                 if (!authed) {
+                    flushEmpty(out, emptySectors)
+                    out.appendLine("Sector $sector")
                     out.appendLine("  (default Key A did not open this sector)")
                     continue
                 }
                 val firstBlock = classic.sectorToBlock(sector)
                 val blocks = classic.getBlockCountInSector(sector)
+                val lines = mutableListOf<String>()
+                var sectorEmpty = true
                 for (i in 0 until blocks) {
                     val blockIndex = firstBlock + i
+                    val isTrailer = (i == blocks - 1)
                     try {
                         val data = classic.readBlock(blockIndex)
-                        out.appendLine("  [$blockIndex] " + data.toHex(" ") + "  |" + data.toAscii() + "|")
+                        if (!isTrailer && data.any { it != 0.toByte() }) sectorEmpty = false
+                        if (!isTrailer) collectText(data, foundText)
+                        if (isTrailer) {
+                            lines.add("  [$blockIndex] Trailer — access " + data.copyOfRange(6, 10).toHex(" ") + " (keys hidden by card)")
+                        } else {
+                            lines.add("  [$blockIndex] " + data.toHex(" ") + "  |" + data.toAscii() + "|")
+                        }
                     } catch (e: IOException) {
-                        out.appendLine("  [$blockIndex] (read failed: " + e.message + ")")
+                        sectorEmpty = false
+                        lines.add("  [$blockIndex] (read failed: " + e.message + ")")
                     }
                 }
+                if (sectorEmpty) {
+                    emptySectors.add(sector)
+                } else {
+                    flushEmpty(out, emptySectors)
+                    out.appendLine("Sector $sector")
+                    lines.forEach { out.appendLine(it) }
+                }
             }
+            flushEmpty(out, emptySectors)
         } catch (e: IOException) {
             out.appendLine("(could not connect to the card: " + e.message + ")")
         } finally {
@@ -85,6 +114,36 @@ object TagDump {
             } catch (_: IOException) {
             }
         }
+    }
+
+    /** Collapses consecutive all-zero sectors into one line. */
+    private fun flushEmpty(out: StringBuilder, emptySectors: MutableList<Int>) {
+        if (emptySectors.isEmpty()) return
+        val label = if (emptySectors.size == 1) {
+            "Sector ${emptySectors[0]}"
+        } else {
+            "Sectors ${emptySectors.first()}–${emptySectors.last()}"
+        }
+        out.appendLine("$label: empty (all zeros)")
+        out.appendLine()
+        emptySectors.clear()
+    }
+
+    /** Picks out readable text (names, numbers, codes) from raw block bytes. */
+    private fun collectText(data: ByteArray, foundText: MutableList<String>) {
+        val current = StringBuilder()
+        fun flush() {
+            val text = current.toString()
+            if (text.length >= 5 && (text.any { it.isLetter() } || text.length >= 8)) {
+                if (!foundText.contains(text)) foundText.add(text)
+            }
+            current.clear()
+        }
+        for (b in data) {
+            val c = b.toInt()
+            if (c in 32..126) current.append(c.toChar()) else flush()
+        }
+        flush()
     }
 
     private fun classicTypeName(type: Int): String = when (type) {
