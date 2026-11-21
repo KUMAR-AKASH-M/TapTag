@@ -50,6 +50,17 @@ number in plain text — TapTag shows it, it does not change it.
   college ID card cannot be written to by this app. Locked (read-only) cards
   and cards too small for the message are refused with a clear message.
 
-## What comes after v1.3
+## What's in v1.4
+
+- **Pretend to be card (HCE demo):** a toggle on the main screen turns on
+  card emulation. When ON, the phone answers any reader that selects
+  TapTag's own AID with the card's UID, name and reg number. Try it with a
+  second phone: tap this phone to it while it runs a tag reader app.
+- **Honest limit:** this is plain Android HCE (ISO-DEP). It cannot imitate a
+  Mifare Classic card — the phone has no Crypto-1 and the UID it sends is
+  random — so it will NOT work at the college reader. The note under the
+  button says so in the app too.
+
+## What comes after v1.4
 
 - Reading Mifare sectors with a custom key (never sector 0 of the college card)

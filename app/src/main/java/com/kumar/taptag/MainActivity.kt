@@ -4,6 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Build
@@ -38,6 +40,8 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         findViewById<Button>(R.id.writeButton).setOnClickListener {
             startActivity(Intent(this, WriteActivity::class.java))
         }
+        findViewById<Button>(R.id.emulateButton).setOnClickListener { toggleEmulation() }
+        updateEmulateButton()
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         when {
@@ -155,5 +159,33 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     private fun clearResult() {
         resultText.text = ""
         statusText.text = "Ready. Tap a card to the back of the phone."
+    }
+
+    /** Turns the HCE "pretend" service on/off. Demo only — see CardEmulationService. */
+    private fun isEmulationEnabled(): Boolean {
+        val component = ComponentName(this, CardEmulationService::class.java)
+        return packageManager.getComponentEnabledSetting(component) !=
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+    }
+
+    private fun toggleEmulation() {
+        val component = ComponentName(this, CardEmulationService::class.java)
+        val newState = if (isEmulationEnabled()) {
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        } else {
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        }
+        packageManager.setComponentEnabledSetting(
+            component, newState, PackageManager.DONT_KILL_APP
+        )
+        updateEmulateButton()
+    }
+
+    private fun updateEmulateButton() {
+        findViewById<Button>(R.id.emulateButton).text = if (isEmulationEnabled()) {
+            "Pretend to be card: ON"
+        } else {
+            "Pretend to be card: OFF"
+        }
     }
 }

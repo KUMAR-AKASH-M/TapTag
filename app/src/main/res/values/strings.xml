@@ -16,4 +16,8 @@
     <string name="write_url_hint">example.com or https://…</string>
     <string name="write_to_card">Write to card</string>
     <string name="write_ready">Type something, tap Write to card, then hold a card to the phone.</string>
+    <string name="emulate_off">Pretend to be card: OFF</string>
+    <string name="emulate_description">TapTag card emulation</string>
+    <string name="emulate_aid_description">TapTag pretend card</string>
+    <string name="emulate_note">Demo only: answers readers that ask for TapTag\'s own code. It cannot imitate a Mifare Classic card and will not work at the college reader.</string>
 </resources>

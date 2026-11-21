@@ -72,4 +72,18 @@
             android:layout_weight="1"
             android:text="@string/write" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/emulateButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/emulate_off" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/emulate_note"
+        android:textSize="12sp" />
 </LinearLayout>
